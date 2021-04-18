@@ -32,7 +32,10 @@
 #define FT5X06_DEVICE_MODE                  0x00
 #define FT5X06_GEST_ID                      0x01
 #define FT5X06_TD_STATUS                    0x02 // How many points detected (3:0). 1-5 is valid.
- 
+
+#define FT5X06_TOUCH_BASE                   0x03 // First touch position register
+#define FT5X06_TOUCH_INCR                      6 // Increment to next touch position register
+
 #define FT5X06_TOUCH1_XH                    0x03 // Event Flag, Touch X Position
 #define FT5X06_TOUCH1_XL                    0x04
 #define FT5X06_TOUCH1_YH                    0x05 // Touch ID, Touch Y Position
@@ -110,41 +113,50 @@
 #define FT5X06_ID_G_STATE_FACTORY           0x03
 #define FT5X06_ID_G_STATE_AUTO_CALIBRATION  0x04
 
-static volatile bool detected;
-static uint8_t       interruptPin;
+static volatile bool   detected;
+static volatile int8_t interruptPin;
 
 class Touch_FT5x06 {
 public:
   Touch_FT5x06(void);
  
-  void     begin(uint8_t sda, uint8_t scl, uint8_t intPin, uint8_t maxPoints = 5);
+  void     begin(int8_t sda, int8_t scl, int8_t intPin = -1, uint8_t maxPoints = 5);
+
+  int8_t   jitterMargin(int8_t margin = -1);
+  uint8_t  maxPointCount(int8_t count = -1);
+
+  bool     pointDetected(void);
+  uint8_t  releaseCount(void);
+
+  uint8_t  getPointCount(void);
+
   int16_t  getPointX(uint8_t point);
   int16_t  getPointY(uint8_t point);
   uint8_t  getGesture(void);
 
-  int8_t   jitterMargin(int8_t margin = -1);
-  uint8_t  maxPointCount(int8_t count = 5);
-
-  uint8_t  getPointCount(void);
-  bool     pointDetected(void);
-
-  uint8_t  pointCount;
-  int16_t  pointX[5];
-  int16_t  pointY[5];
-
-  uint8_t  lastPointCount;
-  int16_t  lastPointX;
-  int16_t  lastPointY;
-
-  uint8_t  margin;
 
 private:
-
-  static void serviceInterrupt(void);
-  uint8_t  reg[FT5X06_REG_COUNT];
+  static void serviceInterrupt(void);          // Touch detect interrupt
   void     writeReg(uint8_t reg, uint8_t val);
   void     readPoints(void);
-  uint8_t  maxPoints;
+
+  uint8_t  maxPoints;  // How many multi-point touches will be reported
+  uint8_t  margin;
+
+  uint8_t  pointCount; // How many touch points have been detected
+  int16_t  pointX[5];  // x coordinates of touches
+  int16_t  pointY[5];  // y coordinates of touches
+
+           // These are used to detect changes in touch position or count
+  uint8_t  lastPointCount;
+  int16_t  lastPointX[5];
+  int16_t  lastPointY[5];
+
+  uint8_t  released;
+  bool     readToggle;
+
+           // Copy of register values
+  uint8_t  reg[FT5X06_REG_COUNT];
 };
  
 #endif
