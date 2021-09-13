@@ -20,7 +20,7 @@ void setup() {
 void loop() {
   if(touch.pointDetected()) {
     uint8_t touches = touch.getPointCount();
-    for (int i = 0; i < touches; i++) {
+    for (int i = 1; i <= touches; i++) {
       Serial.print("Point "); Serial.print(0);
       Serial.print(": x = "); Serial.print(touch.getPointX[0]);
       Serial.print(", y = "); Serial.println(touch.getPointY[0]);
